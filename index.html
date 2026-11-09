@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI-Supported Assessment Platform – Mathematics</title>
+<style>
+:root{--bg:#f6f7fb;--c:#fff;--t:#1b1f3b;--m:#6b7090;--p:#4f46e5;--ok:#16a34a;--bad:#dc2626;--l:#e5e7f2}
+@media(prefers-color-scheme:dark){:root{--bg:#10121f;--c:#1a1d31;--t:#eceefb;--m:#9aa0c4;--l:#2b2f4d}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:16px/1.5 system-ui,sans-serif}
+main{max-width:760px;margin:auto;padding:24px 16px 60px}h1{font-size:2.2rem;margin:.2em 0}
+.sub,.meta,small{color:var(--m)}
+button{font:inherit;cursor:pointer;border:1px solid var(--l);background:var(--c);color:var(--t);border-radius:12px;padding:12px 16px;text-align:left}
+button:hover:not(:disabled){border-color:var(--p)}button:disabled{cursor:default}
+.primary{background:var(--p);color:#fff;border:0;text-align:center}
+.grid{display:grid;gap:12px;margin:18px 0}.card{background:var(--c);border:1px solid var(--l);border-radius:14px;padding:16px;display:grid;gap:8px}
+.opts{display:grid;gap:10px}.opts .ok{background:#dcfce7;border-color:var(--ok);color:#14532d}.opts .bad{background:#fee2e2;border-color:var(--bad);color:#7f1d1d}
+.bar{height:8px;background:var(--l);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--p);transition:width .3s}
+.top{display:flex;justify-content:space-between;font-weight:600;margin-bottom:8px}
+.chip{padding:2px 10px;border-radius:99px;font-size:.8rem;background:var(--l)}
+.Easy{background:#dcfce7;color:#14532d}.Medium{background:#fef3c7;color:#78350f}.Hard{background:#fee2e2;color:#7f1d1d}
+.box{margin:16px 0;padding:14px 16px;border-radius:12px;background:var(--c);border-left:5px solid}.box.ok{border-color:var(--ok)}.box.bad{border-color:var(--bad)}
+.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{border-bottom:1px solid var(--l);padding:8px;text-align:left;vertical-align:top}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}details{margin-top:8px}
+header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--l);z-index:5}
+#nav{max-width:760px;margin:auto;display:flex;gap:6px;padding:10px 16px;overflow-x:auto}#nav button{white-space:nowrap;padding:8px 14px;border-radius:99px}
+#nav .on{background:var(--p);color:#fff;border-color:var(--p)}
+blockquote{margin:0;padding:8px 12px;border-left:3px solid var(--l);color:var(--m);font-style:italic}
+.draft{background:var(--bg);border-radius:10px;padding:10px 12px;color:var(--m);font-size:.92rem}
+pre{white-space:pre-wrap;background:var(--c);border:1px solid var(--l);border-radius:10px;padding:12px;font:.85rem/1.5 ui-monospace,monospace;margin:0}
+ul{margin:4px 0;padding-left:20px}
+</style></head><body><header><nav id=nav><button class=on onclick="home()">1 · AI for Assessment</button><button onclick="sec2()">2 · AI-Supported Feedback</button><button onclick="prompts()">Prompts</button><button onclick="refl()">Reflection</button></nav></header><main id="app"></main>
+<script>
+// [topic, level, descriptor ("the learner can..."), question, CORRECT, wrong1, wrong2, wrong3, worked solution]
+const BANK={
+A:{name:"Quiz A · Core Skills",q:[
+["Fractions","Easy","add fractions with unlike denominators","3/4 + 2/5 = ?","23/20","5/9","7/20","3/10","Use the common denominator 20: 3/4 = 15/20 and 2/5 = 8/20, so the sum is 23/20. Never add the denominators."],
+["Percentages","Easy","find a percentage of a quantity","What is 20% of 150?","30","15","75","120","20% = 0.2, and 0.2 × 150 = 30."],
+["Linear equations","Easy","solve a two-step linear equation","Solve: 3x − 7 = 11","x = 6","x = 4/3","x = 18","x = 2","Add 7 to both sides: 3x = 18, then divide by 3: x = 6. Check: 3·6 − 7 = 11."],
+["Geometry","Medium","apply the Pythagorean theorem","A right triangle has legs 6 cm and 8 cm. How long is the hypotenuse?","10 cm","14 cm","12 cm","100 cm","c² = 6² + 8² = 36 + 64 = 100, so c = √100 = 10 cm. Do not forget the square root."],
+["Quadratics","Medium","solve a quadratic equation by factorising","Solve: x² − 5x + 6 = 0","x = 2 or x = 3","x = −2 or x = −3","x = 1 or x = 6","x = −1 or x = −6","Find two numbers with product 6 and sum −5: −2 and −3. So (x − 2)(x − 3) = 0, giving x = 2 or x = 3."],
+["Probability","Medium","calculate simple probability","A bag has 3 red and 5 blue balls. One ball is drawn at random. What is P(red)?","3/8","3/5","5/8","1/8","P = favourable outcomes ÷ all outcomes = 3 ÷ (3 + 5) = 3/8. The denominator counts ALL balls."],
+["Coordinate geometry","Medium","find the slope of a line through two points","What is the slope of the line through (1, 2) and (3, 8)?","3","1/3","6","5","slope = (y₂ − y₁)/(x₂ − x₁) = (8 − 2)/(3 − 1) = 6/2 = 3."],
+["Exponential equations","Hard","solve exponential equations by equating powers","Solve: 2^(x+1) = 32","x = 4","x = 5","x = 15","x = 16","32 = 2⁵, so x + 1 = 5 and x = 4. Do not forget the +1."],
+["Derivatives","Hard","differentiate a polynomial","Find the derivative of f(x) = 3x² + 5x − 4","6x + 5","3x + 5","6x² + 5","6x − 4","Power rule: (3x²)′ = 6x, (5x)′ = 5, and the constant −4 disappears. So f′(x) = 6x + 5."],
+["Combinatorics","Hard","choose between permutations and combinations","In how many ways can a team of 3 be chosen from 6 students?","20","120","18","216","Order does not matter, so use combinations: C(6,3) = 6!/(3!·3!) = 20. The number 120 counts ordered arrangements (6·5·4)."]]},
+B:{name:"Quiz B · Applied Math",q:[
+["Order of operations","Easy","apply the order of operations","8 + 2 × 5 = ?","18","50","13","40","Multiplication comes before addition: 2 × 5 = 10, then 8 + 10 = 18."],
+["Unit conversion","Easy","convert between metric units","2.5 km = ? m","2500 m","250 m","25 000 m","25 m","1 km = 1000 m, so 2.5 × 1000 = 2500 m."],
+["Area and perimeter","Easy","distinguish area from perimeter","A rectangle is 7 cm by 4 cm. What is its area?","28 cm²","22 cm²","11 cm²","14 cm²","Area = length × width = 7 × 4 = 28 cm². (22 cm is the perimeter.)"],
+["Ratio and proportion","Medium","solve proportion problems with the unit-rate method","5 notebooks cost 600 ₸. How much do 8 notebooks cost?","960 ₸","750 ₸","1 200 ₸","480 ₸","One notebook costs 600 ÷ 5 = 120 ₸, so 8 notebooks cost 8 × 120 = 960 ₸."],
+["Statistics","Medium","find the median of an unordered data set","Find the median of: 2, 9, 4, 10, 5","5","4","6","9","Order the data first: 2, 4, 5, 9, 10. The middle value is 5. (4 is the middle of the unordered list, 6 is the mean.)"],
+["Inequalities","Medium","solve inequalities and flip the sign when needed","Solve: −2x + 3 > 11","x < −4","x > −4","x < 4","x > 4","Subtract 3: −2x > 8. Dividing by a negative number FLIPS the sign: x < −4."],
+["Circles","Medium","use the area formula of a circle","What is the area of a circle with radius 4 cm?","16π cm²","8π cm²","4π cm²","32π cm²","A = πr² = π · 4² = 16π cm². (8π is the circumference 2πr.)"],
+["Parabolas","Hard","find the vertex of a parabola","What is the vertex of y = x² − 6x + 5?","(3, −4)","(−3, −4)","(3, 4)","(6, 5)","x = −b/(2a) = 6/2 = 3, then y = 3² − 6·3 + 5 = −4. The vertex is (3, −4)."],
+["Trigonometry","Hard","use sine in a right triangle","In a right triangle the hypotenuse is 13 and the side opposite angle θ is 5. What is sin θ?","5/13","12/13","5/12","13/5","sin θ = opposite ÷ hypotenuse = 5/13. The other leg is 12, so cos θ = 12/13 and tan θ = 5/12."],
+["Sequences","Hard","sum an arithmetic sequence","Find the sum of the first 10 terms of 3, 7, 11, …","210","39","420","200","a₁ = 3, d = 4, so a₁₀ = 3 + 9·4 = 39. Sₙ = n(a₁ + aₙ)/2 = 10(3 + 39)/2 = 210."]]}};
+const LV=[["High level","You solve routine and multi-step problems accurately and can justify your method."],["Medium level","You apply core methods correctly but slip on multi-step or less familiar problems — review the ❌ rows."],["Developing level","Revisit the worked solutions and the topics marked ❌, then try another quiz."]];
+const $=s=>document.querySelector(s),app=$("#app");let S;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const mk=r=>({t:r[0],l:r[1],d:r[2],q:r[3],c:r[4],o:shuf(r.slice(4,8)),s:r[8]});
+const ai=async b=>{const r=await fetch("/.netlify/functions/feedback",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});if(!r.ok)throw 0;return r.json()};
+const table=(qs,log)=>`<div class=wrap><table><tr><th>#<th>Topic<th>Level<th>Descriptor: the learner can…<th>Answer key<th>${log?"Result":"Worked solution"}</tr>${qs.map((x,i)=>`<tr><td>${i+1}<td>${esc(x.t)}<td>${esc(x.l)}<td>${esc(x.d)}<td><b>${esc(x.c)}</b><td>${log?(log[i]?"✅":"❌"):esc(x.s)}</tr>`).join("")}</table></div>`;
+
+function home(){tab(0);
+app.innerHTML=`<h1>MathQuest</h1><p class=sub>AI-Supported Assessment Platform · <b>Section 1: AI for Assessment</b></p><p>Two short maths quizzes (10 questions each, three difficulty levels) created with Claude. Each has answer options, an answer key, descriptors and instant AI feedback. See how they were made under <b>Prompts</b>.</p><div class=grid>
+${Object.entries(BANK).map(([k,b])=>`<div class=card><b>${b.name}</b><small>${[...new Set(b.q.map(r=>r[0]))].join(" · ")}</small><div class=row style="margin:0"><button class=primary onclick="start('${k}')">Start quiz</button><button onclick="keyView('${k}')">Answer key &amp; descriptors</button></div></div>`).join("")}
+<div class=card><b>✨ AI-generated quiz</b><small>10 brand-new questions every time, written by the AI tutor</small><div class=row style="margin:0"><button class=primary onclick="gen()">Generate quiz</button></div></div></div>
+<details><summary><b>Scoring descriptor</b></summary><p class=sub>1 point per question, counted on the first attempt.</p><div class=wrap><table><tr><th>Score<th>Level<th>Descriptor</tr>${["9–10","6–8","0–5"].map((r,i)=>`<tr><td>${r}<td>${LV[i][0]}<td>${LV[i][1]}</tr>`).join("")}</table></div></details>`}
+
+function keyView(k){app.innerHTML=`<h2>${BANK[k].name}: answer key</h2>${table(BANK[k].q.map(mk),null)}<div class=row><button onclick="home()">← Back</button></div>`}
+function start(k){S={name:BANK[k].name,qs:BANK[k].q.map(mk),i:0,score:0,log:[]};ask()}
+function redo(){S={...S,qs:S.qs.map(x=>({...x,o:shuf(x.o)})),i:0,score:0,log:[]};ask()}
+
+function ask(){const x=S.qs[S.i];
+app.innerHTML=`<div class=top><span>${esc(S.name)}</span><span>Score: ${S.score}</span></div><div class=bar><i style="width:${S.i*10}%"></i></div>
+<p class=meta>Question ${S.i+1} of 10 · ${esc(x.t)} · <span class="chip ${esc(x.l)}">${esc(x.l)}</span></p><h2>${esc(x.q)}</h2>
+<div class=opts>${x.o.map((o,k)=>`<button onclick="pick(${k})">${"ABCD"[k]}. ${esc(o)}</button>`).join("")}</div><div id=fb></div>`}
+
+async function pick(k){const x=S.qs[S.i],bs=[...document.querySelectorAll(".opts button")],right=x.o[k]===x.c;
+bs.forEach((b,j)=>{b.disabled=true;if(x.o[j]===x.c)b.classList.add("ok")});S.log.push(right);
+if(right){S.score++;$("#fb").innerHTML='<div class="box ok">✅ Correct! Moving on…</div>';return void setTimeout(next,1100)}
+bs[k].classList.add("bad");
+$("#fb").innerHTML=`<div class="box bad"><b>Not quite.</b> The correct answer is <b>${esc(x.c)}</b>.<p><b>Worked solution:</b> ${esc(x.s)}</p><p id=ai>🤖 The AI tutor is checking your answer…</p></div><button class=primary onclick="next()">${S.i==9?"See results":"Next question →"}</button>`;
+const el=$("#ai");
+try{const r=await ai({question:x.q,options:x.o,chosen:x.o[k],correct:x.c});el.innerHTML="<b>🤖 AI tutor:</b> "+esc(r.text).replace(/\n/g,"<br>")}
+catch{el.textContent="🤖 The AI tutor is offline right now — use the worked solution above."}}
+
+function next(){S.i++;S.i<10?ask():finish()}
+function finish(){const s=S.score,lv=s>=9?0:s>=6?1:2;
+app.innerHTML=`<h1>${s} / 10</h1><p class=sub><b>${LV[lv][0]}</b> — ${LV[lv][1]}</p><div class=bar><i style="width:${s*10}%"></i></div>
+<h3>Results by descriptor &amp; answer key</h3>${table(S.qs,S.log)}
+<div class=row><button class=primary onclick="home()">Try another quiz</button><button onclick="redo()">Retry this quiz</button><button onclick="gen()">✨ New AI quiz</button></div>`}
+
+async function gen(){
+app.innerHTML="<h2>🤖 Writing 10 new questions…</h2><p class=sub>This takes a few seconds.</p>";
+try{const r=await ai({mode:"generate"}),j=JSON.parse(r.text.slice(r.text.indexOf("{"),r.text.lastIndexOf("}")+1)).questions;
+const qs=j.slice(0,10).map(x=>({t:x.topic,l:x.level,d:x.descriptor,q:x.question,c:String(x.correct),o:shuf([x.correct,...x.wrong.slice(0,3)].map(String)),s:x.solution}));
+if(qs.length<10||qs.some(x=>!x.q||new Set(x.o).size<4))throw 0;
+S={name:"✨ AI-generated quiz",qs,i:0,score:0,log:[]};ask()}
+catch{app.innerHTML='<h2>AI quiz unavailable</h2><p class=sub>The AI backend did not answer. Try again, or pick a built-in quiz.</p><div class=row><button class=primary onclick="gen()">Try again</button><button onclick="home()">Back</button></div>'}}
+const FB=[
+{n:"Student A",lv:"Strong",k:"Easy",
+a:"I need two numbers that multiply to 6 and add up to −5. Those are −2 and −3, so (x − 2)(x − 3) = 0. Then x − 2 = 0 or x − 3 = 0, so x = 2 or x = 3. Check: 2² − 5·2 + 6 = 0 and 3² − 5·3 + 6 = 0.",
+d:"Excellent work! You found the two numbers (−2 and −3), factorised correctly and checked both solutions by substitution. Your reasoning is clear and well organised. Keep it up! To challenge yourself, try solving the same equation with the quadratic formula.",
+c:["Removed the generic closing “Keep it up!” – it tells the student nothing.","Named the zero-product step (“x − 2 = 0 or x − 3 = 0”) as a specific strength.","Replaced “try the quadratic formula” with a more useful stretch task: an equation whose leading coefficient is not 1."],
+f:"Excellent, complete solution. You found the numbers with product 6 and sum −5, factorised correctly, used the zero-product rule, and checked both roots by substitution – that last step makes your answer fully convincing. Next challenge: solve 2x² − 7x + 3 = 0, where the leading coefficient is not 1, and explain what changes."},
+{n:"Student B",lv:"Average",k:"Medium",
+a:"I factorised it as (x − 2)(x − 3) and got x = 2 and x = 3.",
+d:"Good job! Your answer x = 2 and x = 3 is correct and you factorised properly. To improve, show more of your work and explain your steps so your teacher can see your thinking. Great effort!",
+c:["“Show more of your work” was too vague – I listed the three exact missing steps.","Removed “Great effort!” and kept only the accurate praise (the roots are correct).","Added one clear next action: rewrite the answer with those three lines."],
+f:"Your roots x = 2 and x = 3 are correct – well done. The answer shows what you got but not why. Next time add: (1) how you found the factors (two numbers with product 6 and sum −5), (2) the step “x − 2 = 0 or x − 3 = 0”, and (3) a quick check by substitution. Try rewriting your answer with these three lines."},
+{n:"Student C",lv:"Partly correct",k:"Medium",
+a:"I looked for two numbers that multiply to 6 and add to 5, so 2 and 3. That gives (x + 2)(x + 3) = 0, so x = −2 or x = −3.",
+d:"Nice try! You have the right idea of factorising, but there is a mistake with the signs. The numbers should add up to −5, not 5, so the factors are (x − 2)(x − 3) and the solutions are x = 2 and x = 3. Be careful with negative signs next time.",
+c:["Kept the correct diagnosis: the numbers must add up to −5, not 5.","Removed the full solution so the student has to repair the mistake themselves.","Added a substitution check (x = −2 gives 20, not 0) so the student can find the error alone.","Replaced “Nice try!” and “be careful with negative signs” with specific wording."],
+f:"Good method: you look for two numbers with product 6 and then build the brackets. The slip is in the signs: the middle term of x² − 5x + 6 is −5, so the two numbers must add up to −5, not +5. Test your answer: substitute x = −2 into x² − 5x + 6. You get 20, not 0, so something is wrong. Use that clue to fix the signs and try again."},
+{n:"Student D",lv:"Weak",k:"Hard",
+a:"x² − 5x + 6 = 0, so x² = 5x − 6, so x = 5 − 6 = −1.",
+d:"You started well by rearranging the equation to x² = 5x − 6. However, you then made a mistake: you cannot simplify x² to x like that. The correct approach is to factorise: (x − 2)(x − 3) = 0, so x = 2 or x = 3. Keep practising and you will improve!",
+c:["“You started well” was misleading: moving terms is valid, but the next step is not. I made that distinction explicit.","Named the exact error (treating x² as x) instead of “you cannot simplify like that”.","Added a substitution check: x = −1 gives 12, not 0.","Replaced the full solution with a scaffold (two numbers, product 6, sum −5) and removed “Keep practising”."],
+f:"Rearranging to x² = 5x − 6 is a valid step. The problem is the next line: x² = 5x − 6 does not mean x = 5 − 6, because x² is not the same as x. You can see it fails by substituting x = −1: (−1)² − 5(−1) + 6 = 12, not 0. Go back to x² − 5x + 6 = 0 and look for two numbers that multiply to 6 and add to −5, then write the equation as a product of two brackets."}];
+const PR=[
+["Section 1 · Prompt 1 — quiz and platform (my original request, translated from Russian)",`[Attached: photo of the assignment slide – "Create a short digital mathematics quiz with 10 questions of varying difficulty using an AI tool. Transfer the questions to a digital platform; include answer options and an answer key."]
+
+Make the quiz as the assignment asks. You can take different topics for these 10 questions. If the student answers correctly, we move on to the next task; if not, give feedback on the question they got wrong: explain what is wrong and how to solve it correctly. Also make a descriptor or something similar. All of this must be published online as a website. Also make the AI give feedback through an API key, and after the quiz show the score and add the option to take another quiz in the same format with different questions. Do it smartly.`],
+["Section 1 · Prompt 2 — AI tutor built into the quiz (system prompt in the site's code)",`You are a kind maths tutor. In under 120 words: name the exact mistake behind the student's chosen answer, then show the correct method step by step. Plain text, no LaTeX, no markdown.
+
+(The "AI-generated quiz" button uses a second prompt: write 10 multiple-choice questions, 3 Easy / 4 Medium / 3 Hard, different topics, with 3 common-mistake distractors and a short solution each, as JSON.)`],
+["Section 2 · Prompt 3 — sample student answers",`Write 4 sample student answers to this question: "Solve x² − 5x + 6 = 0 and explain your steps." Make them realistic for a 9th–10th grade student: one strong (correct, full explanation, check), one average (correct answer, almost no explanation), one with a common sign error when factorising, and one weak (invalid algebra). Write each in the first person, in the student's own voice.`],
+["Section 2 · Prompt 4 — first feedback prompt (used for the “AI draft” boxes)",`Write feedback for this student answer.
+Question: Solve x² − 5x + 6 = 0 and explain your steps.
+Student answer: [paste answer]`],
+["Section 2 · Prompt 5 — improved feedback prompt (written after reviewing the drafts; the final feedback follows these rules)",`You are a supportive high-school maths teacher. Question: Solve x² − 5x + 6 = 0 and explain your steps. Success criteria: (1) correct roots, (2) steps shown, (3) answer checked by substitution. Write feedback for the student answer below in under 80 words: one specific strength, the exact error or missing step (no generic praise like "Great job!"), and one next step the student can do alone. For wrong answers do NOT give the full solution – guide the student to find the mistake, e.g. with a substitution check.
+Student answer: [paste answer]`]];
+const RF=`AI helped me most with speed and variety. It produced two quizzes with wrong options based on common student mistakes, wrote worked solutions, and drafted feedback in seconds. But it was not enough on its own. The first feedback drafts were generic (“Great job! Keep it up!”), too positive for the weakest answer, and they gave away the full solution instead of helping the student find the mistake. AI-generated quiz answers can also be wrong, so every answer key must be checked by a person, and even the tools change: a model I planned to use had been retired. Next time I would give the AI the success criteria and tone rules in the first prompt, test the quiz with real students, and verify each answer with a second method before publishing.`;
+const tab=n=>document.querySelectorAll("#nav button").forEach((b,i)=>b.classList.toggle("on",i==n));
+function sec2(){tab(1);
+app.innerHTML=`<h1>AI-Supported Feedback</h1><p class=sub>One quiz question, four sample student answers. For each one: the raw AI draft, my review, and the final feedback.</p>
+<div class="box" style="border-color:var(--p)"><b>Question (Quiz A, Q5 – open-response version):</b> Solve x² − 5x + 6 = 0 and explain your steps.<br><small>Success criteria: ① correct roots ② steps shown ③ answer checked by substitution</small></div>
+<div class=grid>${FB.map(x=>`<div class=card><b>${x.n} · <span class="chip ${x.k}">${x.lv}</span></b><blockquote>${esc(x.a)}</blockquote>
+<div class=draft><b>🤖 AI draft</b><br>${esc(x.d)}</div>
+<div><b>✏️ What I changed</b><ul>${x.c.map(c=>`<li>${esc(c)}</li>`).join("")}</ul></div>
+<div class="box ok" style="margin:0"><b>✅ Final feedback</b><br>${esc(x.f)}</div></div>`).join("")}</div>`}
+function prompts(){tab(2);app.innerHTML=`<h1>Prompts</h1><p class=sub>The prompts I gave to AI for both sections.</p>${PR.map(([t,p])=>`<h3>${esc(t)}</h3><pre>${esc(p)}</pre>`).join("")}`}
+function refl(){tab(3);app.innerHTML=`<h1>Reflection</h1><div class=card><p>${esc(RF)}</p><small>${RF.trim().split(/\s+/).length} words</small></div>`}
+home();
+</script></body></html>
